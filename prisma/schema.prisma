@@ -1,0 +1,78 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Owner {
+  id           String        @id @default(cuid())
+  username     String        @unique
+  passwordHash String
+  createdAt    DateTime      @default(now())
+  investigations Investigation[]
+}
+
+model Investigation {
+  id             String   @id @default(cuid())
+  publicToken    String   @unique
+  name           String
+  description    String?
+  destinationUrl String?
+  enabled        Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  ownerId        String
+  owner          Owner    @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  visits         Visit[]
+
+  @@index([publicToken])
+  @@index([ownerId])
+}
+
+model Visit {
+  id               String   @id @default(cuid())
+  investigationId  String
+  visitedAt        DateTime @default(now())
+  consentGiven     Boolean  @default(false)
+
+  // Permission status
+  locationPermission  String   @default("pending") // granted | denied | pending | unsupported
+  batteryPermission   String   @default("pending") // granted | unsupported | pending
+
+  // Location data
+  latitude           Float?
+  longitude          Float?
+  accuracy           Float?
+  locationTimestamp  DateTime?
+
+  // Device info
+  userAgent     String?
+  browser       String?
+  browserVersion String?
+  os            String?
+  osVersion     String?
+  screenWidth   Int?
+  screenHeight  Int?
+  pixelRatio    Float?
+  language      String?
+  timezone      String?
+  platform      String?
+  deviceType    String?
+
+  // Battery info
+  batteryLevel    Float?
+  batteryCharging Boolean?
+
+  // IP (hashed for privacy)
+  ipHash String?
+
+  investigation Investigation @relation(fields: [investigationId], references: [id], onDelete: Cascade)
+
+  @@index([investigationId])
+  @@index([visitedAt])
+}
