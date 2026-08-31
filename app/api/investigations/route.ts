@@ -30,7 +30,7 @@ export async function GET(request: NextRequest) {
 
     const where: Record<string, unknown> = { ownerId: auth.sub };
     if (search) {
-      where.name = { contains: search };
+      where.name = { contains: search, mode: 'insensitive' };
     }
 
     const investigations = await prisma.investigation.findMany({

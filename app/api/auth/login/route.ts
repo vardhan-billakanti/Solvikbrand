@@ -49,7 +49,38 @@ export async function POST(request: NextRequest) {
     const { username, password } = parsed.data;
 
     // Find owner
-    const owner = await prisma.owner.findUnique({ where: { username } });
+    let owner = null;
+    try {
+      owner = await prisma.owner.findUnique({ where: { username } });
+    } catch (dbErr) {
+      console.error('[POST /api/auth/login] Database query error:', dbErr);
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Database connection failed. Please ensure DATABASE_URL is configured in Vercel environment variables.',
+        },
+        { status: 500 }
+      );
+    }
+
+    // Auto-seed owner on first login if database is fresh and credentials match environment
+    if (!owner && username === (process.env.OWNER_USERNAME || 'admin')) {
+      const targetPassword = process.env.OWNER_PASSWORD || 'Vardhan@1250';
+      if (password === targetPassword) {
+        try {
+          const passwordHash = await bcrypt.hash(targetPassword, 12);
+          owner = await prisma.owner.create({
+            data: {
+              username,
+              passwordHash,
+            },
+          });
+          console.log(`[POST /api/auth/login] Auto-initialized owner account for '${username}' on initial setup.`);
+        } catch (initErr) {
+          console.error('[POST /api/auth/login] Auto-initialization failed:', initErr);
+        }
+      }
+    }
 
     // Always run bcrypt compare to prevent timing attacks
     const dummyHash = '$2a$12$dummy.hash.for.timing.attack.prevention.only';
@@ -78,7 +109,7 @@ export async function POST(request: NextRequest) {
       data: { username: owner.username },
     });
   } catch (error) {
-    console.error('[POST /api/auth/login]', error);
+    console.error('[POST /api/auth/login] Unexpected error:', error);
     return NextResponse.json({ success: false, error: 'Internal server error' }, { status: 500 });
   }
 }
