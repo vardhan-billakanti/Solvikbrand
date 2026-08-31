@@ -1,5 +1,5 @@
 /**
- * Centralized URL utility for constructing public Dvideo URLs.
+ * Centralized URL utility for constructing public SolvikBrand URLs.
  *
  * Priority:
  * 1. NEXT_PUBLIC_APP_URL if explicitly configured (non-empty)
@@ -40,10 +40,11 @@ export function getBaseUrl(): string {
   return '';
 }
 
-export function getDvideoUrl(token: string): string {
+export function getSolvikBrandUrl(token: string): string {
   const base = getBaseUrl();
   return base ? `${base}/t/${token}` : `/t/${token}`;
 }
 
-// Alias for backwards compatibility
-export const getTraceLinkUrl = getDvideoUrl;
+// Aliases for compatibility
+export const getDvideoUrl = getSolvikBrandUrl;
+export const getTraceLinkUrl = getSolvikBrandUrl;

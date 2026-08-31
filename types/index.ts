@@ -1,4 +1,4 @@
-// Types for Dvideo application
+// Types for SolvikBrand application
 
 export interface Owner {
   id: string;

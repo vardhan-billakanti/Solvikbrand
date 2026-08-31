@@ -1,1 +1,1 @@
-export { getBaseUrl, getDvideoUrl, getTraceLinkUrl } from './app-url';
+export { getBaseUrl, getSolvikBrandUrl, getDvideoUrl, getTraceLinkUrl } from './app-url';

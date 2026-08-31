@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
-import { getDvideoUrl } from '@/lib/url';
+import { getSolvikBrandUrl } from '@/lib/url';
 
 interface Investigation {
   id: string;
@@ -95,15 +95,15 @@ export default function DashboardPage() {
   };
 
   const handleCopy = (inv: Investigation) => {
-    const url = inv.publicUrl || getDvideoUrl(inv.publicToken);
+    const url = inv.publicUrl || getSolvikBrandUrl(inv.publicToken);
     navigator.clipboard.writeText(url).then(() => {
       setCopiedId(inv.id);
-      showToast('Dvideo link copied to clipboard!');
+      showToast('SolvikBrand link copied to clipboard!');
       setTimeout(() => setCopiedId(null), 2000);
     });
   };
 
-  const getTrackingUrl = (token: string, publicUrl?: string) => publicUrl || getDvideoUrl(token);
+  const getTrackingUrl = (token: string, publicUrl?: string) => publicUrl || getSolvikBrandUrl(token);
 
   const filteredInvestigations = investigations.filter((inv) =>
     inv.name.toLowerCase().includes(search.toLowerCase())
@@ -347,10 +347,10 @@ function InvestigationCard({
         </div>
       )}
 
-      {/* Generated Dvideo Link Token */}
+      {/* Generated SolvikBrand Link Token */}
       <div style={{ marginBottom: '16px' }}>
         <div style={{ fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-muted)', marginBottom: '4px' }}>
-          Generated Dvideo Link
+          Generated SolvikBrand Link
         </div>
         <div className="token-display" style={{ fontSize: '11px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
           {getUrl(inv.publicToken, inv.publicUrl)}
@@ -388,11 +388,11 @@ function InvestigationCard({
           Results
         </Link>
 
-        {/* Copy Dvideo Link button */}
+        {/* Copy SolvikBrand Link button */}
         <button
           className="btn btn-ghost btn-sm"
           onClick={() => onCopy(inv)}
-          title="Copy Dvideo Link"
+          title="Copy SolvikBrand Link"
           style={{
             color: copied ? 'var(--accent-green)' : 'var(--text-secondary)',
             fontSize: '12px',
@@ -411,7 +411,7 @@ function InvestigationCard({
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
               </svg>
-              <span>Copy Dvideo Link</span>
+              <span>Copy SolvikBrand Link</span>
             </>
           )}
         </button>
@@ -543,7 +543,7 @@ function CreateModal({
                 New Investigation
               </h2>
               <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '13px' }}>
-                Generate a secure Dvideo link with an optional destination URL wrapper
+                Generate a secure SolvikBrand link with an optional destination URL wrapper
               </p>
             </div>
             <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
@@ -648,7 +648,7 @@ function CreateModal({
 
             <div style={{ marginBottom: '20px' }}>
               <label className="input-label" style={{ marginBottom: '8px', display: 'block' }}>
-                Your Generated Dvideo Link
+                Your Generated SolvikBrand Link
               </label>
               <div className="token-display" style={{ wordBreak: 'break-all', fontSize: '12px', marginBottom: '10px' }}>
                 {getUrl(createdInv.publicToken, createdInv.publicUrl)}
@@ -659,7 +659,7 @@ function CreateModal({
                 style={{ width: '100%' }}
                 onClick={handleCopy}
               >
-                {copied ? '✅ Dvideo Link Copied!' : '📋 Copy Dvideo Link'}
+                {copied ? '✅ SolvikBrand Link Copied!' : '📋 Copy SolvikBrand Link'}
               </button>
             </div>
             <button className="btn btn-primary" style={{ width: '100%' }} onClick={onClose}>

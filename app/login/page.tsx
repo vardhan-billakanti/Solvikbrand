@@ -84,7 +84,7 @@ export default function LoginPage() {
               <path d="M17 8V3h5l-5 5z"/>
             </svg>
           </div>
-          <h1 className="heading-lg text-gradient" style={{ margin: '0 0 8px' }}>Dvideo</h1>
+          <h1 className="heading-lg text-gradient" style={{ margin: '0 0 8px' }}>SolvikBrand</h1>
           <p style={{ color: 'var(--text-secondary)', fontSize: '14px', margin: 0 }}>
             Cybersecurity Investigation Platform
           </p>

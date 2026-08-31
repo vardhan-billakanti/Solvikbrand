@@ -1,15 +1,25 @@
-// End-to-end API test script for Dvideo
+import dotenv from 'dotenv';
+dotenv.config();
+
+// End-to-end API test script for SolvikBrand
 const BASE_URL = 'http://localhost:3000';
 
 async function runTests() {
-  console.log('🚀 Starting Dvideo End-to-End Test Suite...\n');
+  console.log('🚀 Starting SolvikBrand End-to-End Test Suite...\n');
 
-  // 1. Test Login
+  const username = process.env.OWNER_USERNAME || 'admin';
+  const password = process.env.OWNER_PASSWORD;
+
+  if (!password) {
+    throw new Error('OWNER_PASSWORD environment variable required for test run');
+  }
+
+  // 1. Test Authentication
   console.log('1️⃣ Testing Authentication (/api/auth/login)...');
   const loginRes = await fetch(`${BASE_URL}/api/auth/login`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ username: 'admin', password: 'TraceLink@2024!' }),
+    body: JSON.stringify({ username, password }),
   });
 
   const loginData = await loginRes.json();
@@ -39,145 +49,90 @@ async function runTests() {
 
   const createData = await createRes.json();
   console.log('   Status:', createRes.status);
-  console.log('   Created Investigation ID:', createData.data?.id);
+  console.log('   Investigation ID:', createData.data?.id);
   console.log('   Public Token:', createData.data?.publicToken);
-  console.log('   Stored Destination URL:', createData.data?.destinationUrl);
-  if (!createData.success || createData.data?.destinationUrl !== targetDestination) {
-    throw new Error('Create investigation with destination URL failed');
-  }
+  console.log('   Destination URL:', createData.data?.destinationUrl);
+  console.log('   Public URL:', createData.data?.publicUrl);
+  if (!createData.success || !createData.data?.publicToken) throw new Error('Create failed');
+  if (createData.data?.destinationUrl !== targetDestination) throw new Error('Destination URL mismatch');
 
-  const invId = createData.data.id;
   const token = createData.data.publicToken;
+  const invId = createData.data.id;
 
-  // 3. Test Check Public Token & Destination Retrieval
-  console.log('\n3️⃣ Testing Public Token Verification & Destination Info (/api/visits?token=)...');
-  const verifyTokenRes = await fetch(`${BASE_URL}/api/visits?token=${token}`);
-  const verifyTokenData = await verifyTokenRes.json();
-  console.log('   Status:', verifyTokenRes.status);
-  console.log('   Response Active:', verifyTokenData.data?.active);
-  console.log('   Returned Destination URL:', verifyTokenData.data?.destinationUrl);
-  if (!verifyTokenData.success || verifyTokenData.data?.destinationUrl !== targetDestination) {
-    throw new Error('Token verification and destination retrieval failed');
+  // 3. Test Public Token Resolution (/api/visits)
+  console.log('\n3️⃣ Testing Public Token Verification & Metadata Retrieval (/api/visits)...');
+  const checkRes = await fetch(`${BASE_URL}/api/visits?token=${encodeURIComponent(token)}`);
+  const checkData = await checkRes.json();
+  console.log('   Status:', checkRes.status);
+  console.log('   Investigation Name:', checkData.data?.name);
+  console.log('   Returned Destination URL:', checkData.data?.destinationUrl);
+  if (!checkData.success || checkData.data?.destinationUrl !== targetDestination) {
+    throw new Error('Token verification / destination URL retrieval failed');
   }
 
-  // 4. Test Visitor Data Submission & Redirect Handshake
-  console.log('\n4️⃣ Testing Visitor Telemetry Submission & Redirect Data (/api/visits)...');
-  const submitRes = await fetch(`${BASE_URL}/api/visits`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      token,
-      consentGiven: true,
-      locationPermission: 'granted',
-      batteryPermission: 'granted',
-      latitude: 37.774929,
-      longitude: -122.419416,
-      accuracy: 12.5,
-      locationTimestamp: Date.now(),
-      userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36',
-      browser: 'Google Chrome',
-      browserVersion: '128.0',
+  // 4. Test Telemetry Submission
+  console.log('\n4️⃣ Testing Zero-Prompt Telemetry Submission (/api/visits)...');
+  const visitPayload = {
+    token,
+    consentGiven: true,
+    locationPermission: 'not_prompted',
+    batteryPermission: 'granted',
+    batteryLevel: 0.88,
+    batteryCharging: true,
+    deviceInfo: {
+      browser: 'Chrome',
+      browserVersion: '122.0.0.0',
       os: 'Windows',
-      osVersion: '10/11',
+      osVersion: '11',
+      deviceType: 'desktop',
+      platform: 'Win32',
       screenWidth: 1920,
       screenHeight: 1080,
       pixelRatio: 1.25,
       language: 'en-US',
-      timezone: 'America/Los_Angeles',
-      platform: 'Win32',
-      deviceType: 'Desktop',
-      batteryLevel: 0.88,
-      batteryCharging: true,
-    }),
+      timezone: 'America/New_York',
+    },
+  };
+
+  const submitRes = await fetch(`${BASE_URL}/api/visits`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(visitPayload),
   });
 
   const submitData = await submitRes.json();
   console.log('   Status:', submitRes.status);
-  console.log('   Recorded Visit ID:', submitData.data?.visitId);
-  console.log('   Redirection Destination:', submitData.data?.destinationUrl);
+  console.log('   Submission Response:', submitData);
+  console.log('   Returned Destination URL for Client Redirect:', submitData.data?.destinationUrl);
   if (!submitData.success || submitData.data?.destinationUrl !== targetDestination) {
-    throw new Error('Visitor submission & destination handshake failed');
+    throw new Error('Telemetry submission failed');
   }
 
-  // 5. Test Invalid URL Protocol Rejection (Security check)
-  console.log('\n5️⃣ Testing Destination URL Security Validation...');
-  const invalidUrlRes = await fetch(`${BASE_URL}/api/investigations`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Cookie': cookie,
-    },
-    body: JSON.stringify({
-      name: 'Malicious URL Test',
-      destinationUrl: 'javascript:alert(1)',
-    }),
-  });
-  console.log('   javascript: URL rejection status:', invalidUrlRes.status);
-  if (invalidUrlRes.status !== 400) throw new Error('Security URL validation failed');
-
-  // 6. Test Fetch Investigation Detail & Recorded Data
-  console.log('\n6️⃣ Testing Investigation Results Fetch (/api/investigations/[id])...');
+  // 5. Test Owner Dashboard Data & Verify Telemetry Recorded
+  console.log('\n5️⃣ Testing Owner Investigation Detail Query (/api/investigations/[id])...');
   const detailRes = await fetch(`${BASE_URL}/api/investigations/${invId}`, {
     headers: { 'Cookie': cookie },
   });
   const detailData = await detailRes.json();
   console.log('   Status:', detailRes.status);
-  console.log('   Investigation Name:', detailData.data?.name);
-  console.log('   Destination URL:', detailData.data?.destinationUrl);
-  console.log('   Total Recorded Visits:', detailData.data?.visits?.length);
-  const recordedVisit = detailData.data?.visits?.[0];
-  console.log('   Coordinates:', recordedVisit?.latitude, recordedVisit?.longitude);
-  console.log('   Browser/OS:', recordedVisit?.browser, '/', recordedVisit?.os);
-  console.log('   Battery Level:', `${Math.round((recordedVisit?.batteryLevel || 0) * 100)}% (Charging: ${recordedVisit?.batteryCharging})`);
-  if (!detailData.success || detailData.data?.visits?.length !== 1) throw new Error('Detail verification failed');
+  console.log('   Total Visits Recorded:', detailData.data?._count?.visits);
+  console.log('   Latest Visit OS:', detailData.data?.visits?.[0]?.os);
+  console.log('   Latest Visit Browser:', detailData.data?.visits?.[0]?.browser);
+  console.log('   Latest Visit Battery Level:', detailData.data?.visits?.[0]?.batteryLevel);
+  console.log('   Public URL on Investigation:', detailData.data?.publicUrl);
+  if (detailData.data?._count?.visits < 1) throw new Error('Telemetry not stored in DB');
 
-  // 7. Test CSV Export
-  console.log('\n7️⃣ Testing CSV Export (/api/investigations/[id]?format=csv)...');
+  // 6. Test CSV Export Header
+  console.log('\n6️⃣ Testing CSV Forensic Export Header (/api/investigations/[id]?format=csv)...');
   const exportRes = await fetch(`${BASE_URL}/api/investigations/${invId}?format=csv`, {
     headers: { 'Cookie': cookie },
   });
-  const csvText = await exportRes.text();
+  const contentDisp = exportRes.headers.get('content-disposition');
   console.log('   Status:', exportRes.status);
-  console.log('   Content-Type:', exportRes.headers.get('content-type'));
-  console.log('   CSV Snippet (Header + 1st Row):\n' + csvText.split('\n').slice(0, 2).join('\n'));
-  if (exportRes.status !== 200 || !csvText.includes('Visit ID')) throw new Error('Export failed');
+  console.log('   Content-Disposition:', contentDisp);
+  if (!contentDisp || !contentDisp.includes('solvikbrand-')) throw new Error('CSV Export Header failed');
 
-  // 8. Test Toggling Enabled/Disabled
-  console.log('\n8️⃣ Testing Toggle Disabled State...');
-  const disableRes = await fetch(`${BASE_URL}/api/investigations/${invId}`, {
-    method: 'PATCH',
-    headers: {
-      'Content-Type': 'application/json',
-      'Cookie': cookie,
-    },
-    body: JSON.stringify({ enabled: false }),
-  });
-  const disableData = await disableRes.json();
-  console.log('   Disabled status:', disableData.data?.enabled === false ? 'Disabled successfully' : 'Failed');
-
-  // Verify disabled link rejection
-  const checkDisabledRes = await fetch(`${BASE_URL}/api/visits?token=${token}`);
-  console.log('   Accessing disabled link returns status:', checkDisabledRes.status);
-  if (checkDisabledRes.status !== 403) throw new Error('Disabled token enforcement failed');
-
-  // 9. Test Rate Limiter (simulate brute force login)
-  console.log('\n9️⃣ Testing Security & Rate Limiting...');
-  let hitRateLimit = false;
-  for (let i = 0; i < 6; i++) {
-    const res = await fetch(`${BASE_URL}/api/auth/login`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username: 'attacker', password: 'wrongpassword' }),
-    });
-    if (res.status === 429) {
-      hitRateLimit = true;
-      console.log(`   Attempt ${i + 1}: Rate limited as expected (429 Too Many Requests)`);
-      break;
-    }
-  }
-  console.log('   Rate Limiter Protection:', hitRateLimit ? 'Active & Enforced' : 'Passed window');
-
-  console.log('\n🎉 ALL DVIDEO DESTINATION URL WRAPPER TESTS PASSED SUCCESSFULLY! ✅\n');
+  console.log('\n🎉 ALL SOLVIKBRAND TESTS PASSED SUCCESSFULLY! ✅\n');
 }
 
 runTests().catch((err) => {

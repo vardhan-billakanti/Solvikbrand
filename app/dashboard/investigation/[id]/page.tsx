@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
-import { getDvideoUrl } from '@/lib/url';
+import { getSolvikBrandUrl } from '@/lib/url';
 
 // Dynamically import map to avoid SSR issues with Leaflet
 const MapView = dynamic(() => import('@/components/MapView'), { ssr: false, loading: () => (
@@ -136,7 +136,7 @@ export default function InvestigationDetailPage() {
 
   if (!investigation) return null;
 
-  const trackingUrl = investigation.publicUrl || getDvideoUrl(investigation.publicToken);
+  const trackingUrl = investigation.publicUrl || getSolvikBrandUrl(investigation.publicToken);
 
   return (
     <>
@@ -231,9 +231,9 @@ export default function InvestigationDetailPage() {
           </div>
           <button
             className="btn btn-ghost btn-sm"
-            onClick={() => { navigator.clipboard.writeText(trackingUrl); showToast('Dvideo link copied!'); }}
+            onClick={() => { navigator.clipboard.writeText(trackingUrl); showToast('SolvikBrand link copied!'); }}
           >
-            📋 Copy Dvideo Link
+            📋 Copy SolvikBrand Link
           </button>
         </div>
       </div>

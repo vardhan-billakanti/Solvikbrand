@@ -5,10 +5,14 @@ const prisma = new PrismaClient();
 
 async function main() {
   const username = process.env.OWNER_USERNAME || 'admin';
-  const password = process.env.OWNER_PASSWORD || 'TraceLink@2024!';
+  const password = process.env.OWNER_PASSWORD;
+
+  if (!password) {
+    throw new Error('OWNER_PASSWORD environment variable must be provided');
+  }
 
   console.log(`🌱 Seeding database...`);
-  console.log(`👤 Creating owner: ${username}`);
+  console.log(`👤 Upserting owner: ${username}`);
 
   const passwordHash = await bcrypt.hash(password, 12);
 
@@ -18,11 +22,7 @@ async function main() {
     create: { username, passwordHash },
   });
 
-  console.log(`✅ Owner created: ${owner.username} (id: ${owner.id})`);
-  console.log(`\n🔐 Login credentials:`);
-  console.log(`   Username: ${username}`);
-  console.log(`   Password: ${password}`);
-  console.log(`\n⚠️  Change your password in production!`);
+  console.log(`✅ Owner credentials successfully updated (id: ${owner.id})`);
 }
 
 main()

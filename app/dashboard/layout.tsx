@@ -55,8 +55,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             </svg>
           </div>
           <span style={{ fontWeight: 700, fontSize: '16px', letterSpacing: '-0.01em' }}>
-            <span className="text-gradient">D</span>
-            <span style={{ color: 'var(--text-secondary)' }}>video</span>
+            <span className="text-gradient">Solvik</span>
+            <span style={{ color: 'var(--text-secondary)' }}>Brand</span>
           </span>
         </Link>
 

@@ -102,7 +102,7 @@ export async function GET(
         .map((row) => row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(','))
         .join('\n');
 
-      const filename = `dvideo-${investigation.name.replace(/[^a-z0-9]/gi, '_')}-${Date.now()}.csv`;
+      const filename = `solvikbrand-${investigation.name.replace(/[^a-z0-9]/gi, '_')}-${Date.now()}.csv`;
 
       return new NextResponse(csvContent, {
         headers: {
